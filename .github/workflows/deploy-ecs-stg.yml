@@ -52,7 +52,7 @@ jobs:
           fi
           echo "commit_sha=${LATEST_SHA}" >> "$GITHUB_OUTPUT"
           echo "--------------------------------"
-          echo $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
 
       - name: Validate ECR image exists for tag
         id: ecr_image

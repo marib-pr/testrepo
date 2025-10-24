@@ -59,7 +59,7 @@ jobs:
           echo "commit_sha=${LATEST_SHA}" >> "$GITHUB_OUTPUT"
           echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
           echo "--------------------------------"
-          echo $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
 
       # - name: Validate ECR image exists for tag
       #   id: ecr_image
@@ -156,7 +156,7 @@ jobs:
           echo "EOF" >> $GITHUB_OUTPUT
           echo "html_url=${HTML_URL}" >> $GITHUB_OUTPUT
           echo "--------------------------------"
-          echo $GITHUB_OUTPUT
+          cat $GITHUB_OUTPUT
 
       - name: Post release notes to Slack (bot)
         if: ${{ success() && secrets.SLACK_BOT_TOKEN != '' && secrets.SLACK_DEPLOY_ANNOUNCEMENTS_CHANNEL != '' }}
