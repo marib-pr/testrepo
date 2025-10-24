@@ -1,4 +1,4 @@
-name: Deploy ECS to Prod
+name: test prd workflow
 
 on:
   workflow_dispatch:
