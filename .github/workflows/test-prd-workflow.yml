@@ -127,57 +127,57 @@ jobs:
       #     cluster: ${{ steps.vars.outputs.cluster_name }}
       #     wait-for-service-stability: true
 
-      - name: Create GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.event.inputs.tag }}
-          target_commitish: ${{ steps.sha.outputs.commit_sha }}
-          name: Production Release ${{ github.event.inputs.tag }}
-          generate_release_notes: true
+      # - name: Create GitHub Release
+      #   id: create_release
+      #   uses: softprops/action-gh-release@v2
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     tag_name: ${{ github.event.inputs.tag }}
+      #     target_commitish: ${{ steps.sha.outputs.commit_sha }}
+      #     name: Production Release ${{ github.event.inputs.tag }}
+      #     generate_release_notes: true
 
-      - name: Fetch release data (for Slack)
-        id: release_data
-        if: success()
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ github.event.inputs.tag }}
-        run: |
-          set -euo pipefail
-          RESP=$(curl -sSL -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${TAG_NAME}")
-          BODY=$(echo "$RESP" | jq -r '.body // "(no release notes)"')
-          HTML_URL=$(echo "$RESP" | jq -r '.html_url')
-          echo "body<<EOF" >> $GITHUB_OUTPUT
-          echo "$BODY" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-          echo "html_url=${HTML_URL}" >> $GITHUB_OUTPUT
-          echo "--------------------------------"
-          cat $GITHUB_OUTPUT
+      # - name: Fetch release data (for Slack)
+      #   id: release_data
+      #   if: success()
+      #   shell: bash
+      #   env:
+      #     GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #     TAG_NAME: ${{ github.event.inputs.tag }}
+      #   run: |
+      #     set -euo pipefail
+      #     RESP=$(curl -sSL -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json" \
+      #       "https://api.github.com/repos/${GITHUB_REPOSITORY}/releases/tags/${TAG_NAME}")
+      #     BODY=$(echo "$RESP" | jq -r '.body // "(no release notes)"')
+      #     HTML_URL=$(echo "$RESP" | jq -r '.html_url')
+      #     echo "body<<EOF" >> $GITHUB_OUTPUT
+      #     echo "$BODY" >> $GITHUB_OUTPUT
+      #     echo "EOF" >> $GITHUB_OUTPUT
+      #     echo "html_url=${HTML_URL}" >> $GITHUB_OUTPUT
+      #     echo "--------------------------------"
+      #     cat $GITHUB_OUTPUT
 
-      - name: Post release notes to Slack (bot)
-        if: ${{ success() && secrets.SLACK_BOT_TOKEN != '' && secrets.SLACK_DEPLOY_ANNOUNCEMENTS_CHANNEL != '' }}
-        shell: bash
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SLACK_CHANNEL: ${{ secrets.SLACK_DEPLOY_ANNOUNCEMENTS_CHANNEL }}
-          TAG_NAME: ${{ github.event.inputs.tag }}
-          COMMIT_SHA: ${{ steps.sha.outputs.commit_sha }}
-          RELEASE_URL: ${{ steps.release_data.outputs.html_url }}
-        run: |
-          set -euo pipefail
-          NOTES_FILE=release_notes.txt
-          echo "${{ steps.release_data.outputs.body }}" > "$NOTES_FILE"
-          TEXT="*Production deployment completed*\n• Tag: ${TAG_NAME}\n• Commit: ${COMMIT_SHA}\n• Release: ${RELEASE_URL}\n\n*Release Notes:*\n$(cat "$NOTES_FILE")"
-          PAYLOAD=$(jq -n --arg channel "$SLACK_CHANNEL" --arg text "$TEXT" '{channel: $channel, text: $text}')
-          RESP=$(curl -sS -X POST \
-            -H 'Content-type: application/json; charset=utf-8' \
-            -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
-            --data "$PAYLOAD" \
-            https://slack.com/api/chat.postMessage)
-          echo "$RESP" | jq -e '.ok == true' >/dev/null || { echo "Slack post failed: $RESP" >&2; exit 1; }
+      # - name: Post release notes to Slack (bot)
+      #   if: ${{ success() && secrets.SLACK_BOT_TOKEN != '' && secrets.SLACK_DEPLOY_ANNOUNCEMENTS_CHANNEL != '' }}
+      #   shell: bash
+      #   env:
+      #     SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      #     SLACK_CHANNEL: ${{ secrets.SLACK_DEPLOY_ANNOUNCEMENTS_CHANNEL }}
+      #     TAG_NAME: ${{ github.event.inputs.tag }}
+      #     COMMIT_SHA: ${{ steps.sha.outputs.commit_sha }}
+      #     RELEASE_URL: ${{ steps.release_data.outputs.html_url }}
+      #   run: |
+      #     set -euo pipefail
+      #     NOTES_FILE=release_notes.txt
+      #     echo "${{ steps.release_data.outputs.body }}" > "$NOTES_FILE"
+      #     TEXT="*Production deployment completed*\n• Tag: ${TAG_NAME}\n• Commit: ${COMMIT_SHA}\n• Release: ${RELEASE_URL}\n\n*Release Notes:*\n$(cat "$NOTES_FILE")"
+      #     PAYLOAD=$(jq -n --arg channel "$SLACK_CHANNEL" --arg text "$TEXT" '{channel: $channel, text: $text}')
+      #     RESP=$(curl -sS -X POST \
+      #       -H 'Content-type: application/json; charset=utf-8' \
+      #       -H "Authorization: Bearer ${SLACK_BOT_TOKEN}" \
+      #       --data "$PAYLOAD" \
+      #       https://slack.com/api/chat.postMessage)
+      #     echo "$RESP" | jq -e '.ok == true' >/dev/null || { echo "Slack post failed: $RESP" >&2; exit 1; }
 
 
